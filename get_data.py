@@ -16,4 +16,4 @@ for split in dataset:
         lang_fs[lang] = open(data_dir / f'raw.{lang}', 'w')
     for data in dataset[split]['translation']:
         for lang in langs:
-            print(data[lang], file = lang_fs[lang])
+            print(data[lang].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip(), file = lang_fs[lang])

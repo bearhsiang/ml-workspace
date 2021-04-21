@@ -5,7 +5,8 @@ vocab_size = 800
 
 data_root = Path('./data')
 dataset_name = 'wmt17_en-de'
-splits = ['train', 'validation']
+# splits = ['train', 'validation']
+splits = ['train']
 langs = ['en', 'de']
 output_path = str(data_root/dataset_name/f'vocab_{vocab_size}.json')
 
