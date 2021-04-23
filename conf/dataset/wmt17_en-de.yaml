@@ -1,0 +1,9 @@
+# @package _group_
+name: wmt17_en-de
+keys: [en, de]
+train:
+  train_prefix: train/clean
+valid:
+  valid_prefix: validation/raw
+test:
+  test_prefix: test/clean

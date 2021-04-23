@@ -1,0 +1,37 @@
+# @package _global_
+defaults:
+  - model: TransformerSmall
+  - dataset: wmt17_en-de
+
+data_root: /home/sean/Desktop/seq2seq/data/
+DatasetWapper: PairedDataset
+
+src_lang: de
+tgt_lang: en
+total_epochs: 30
+train_batch_size: 64
+grad_accu_step: 4
+valid_step: 1024
+valid_batch_size: 128
+max_len: 128
+valid_max_len: 128
+
+tokenizer:
+  type: SPTokenizer
+  config:
+    spm_path: ${data_root}/${dataset.name}/spm_8000.model
+
+optimizer:
+  type: NoamOpt
+  config:
+    lr_factor: 2
+    lr_warmup: 4000
+    backend: 
+      type: AdamW
+      config: 
+        lr: 0
+        betas: (0.9, 0.98)
+        eps: 1e-9
+        weight_decay: 0.0001
+
+
