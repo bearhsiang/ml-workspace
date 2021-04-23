@@ -4,10 +4,10 @@ from pathlib import Path
 vocab_size = 8000
 
 data_root = Path('./data')
-dataset_name = 'wmt17_en-de'
+dataset_name = 'ted2020'
 # splits = ['train', 'validation']
 splits = ['train']
-langs = ['en', 'de']
+langs = ['en', 'zh']
 output_prefix = str(data_root/dataset_name/f'spm_{vocab_size}')
 
 training_files = []

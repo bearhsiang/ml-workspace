@@ -1,9 +1,10 @@
 from datasets import load_dataset
 from pathlib import Path
+from tqdm.auto import tqdm
 
-dataset_name = 'wmt17_en-de'
-dataset_config = ['wmt17', 'de-en']
-langs = ['en', 'de']
+dataset_name = 'wmt17_en-zh'
+dataset_config = ['wmt17', 'zh-en']
+langs = ['en', 'zh']
 
 data_root = Path('./data')
 dataset = load_dataset(*dataset_config)
@@ -14,6 +15,6 @@ for split in dataset:
     data_dir.mkdir(parents=True)
     for lang in langs:
         lang_fs[lang] = open(data_dir / f'raw.{lang}', 'w')
-    for data in dataset[split]['translation']:
+    for data in tqdm(dataset[split]['translation']):
         for lang in langs:
             print(data[lang].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip(), file = lang_fs[lang])
