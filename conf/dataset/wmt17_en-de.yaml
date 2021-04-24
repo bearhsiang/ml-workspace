@@ -1,9 +1,10 @@
 # @package _group_
 name: wmt17_en-de
 keys: [en, de]
+data_dir: ${data_root}/wmt17_en-de
 train:
-  train_prefix: train/clean
+  prefix: train/clean
 valid:
-  valid_prefix: validation/raw
+  prefix: validation/raw
 test:
-  test_prefix: test/clean
+  prefix: test/clean

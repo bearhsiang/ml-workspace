@@ -1,5 +1,5 @@
-from datasetWapper import PairedDataset
+from datasetWapper import PairedDatasetWapper
 
-def get_dataset(name, split, config):
-    if name == "PairedDataset":
-        return PairedDataset(split, config)
+def get_datasetWapper(type):
+    if type == "PairedDatasetWapper":
+        return PairedDatasetWapper()

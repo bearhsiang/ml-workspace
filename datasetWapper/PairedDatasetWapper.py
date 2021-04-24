@@ -1,15 +1,19 @@
 from torch.utils.data import Dataset, DataLoader
+from .DatasetWapper import DatasetWapper
 
-class PairedDataset(Dataset):
+class PairedDatasetWapper(DatasetWapper):
 
-    def __init__(self, prefix, langs, suffix=''):
+    def __init__(self):
         super().__init__()
+
+    def load_data(self, dataset, split):
+        self.langs = dataset['keys']
         self.data = {}
         self.length = -1
-        self.langs = langs
-        for lang in langs:
+        prefix = f"{dataset['data_dir']}/{dataset[split]['prefix']}"
+        for lang in self.langs:
             self.data[lang] = []
-            with open(prefix+lang+suffix, 'r') as f:
+            with open(f'{prefix}.{lang}', 'r') as f:
                 for line in f:
                     self.data[lang].append(line.strip())
             
@@ -30,9 +34,20 @@ class PairedDataset(Dataset):
         return self.length
 
 if __name__ == '__main__':
-    dataset = PairedDataset("data/wmt17_en-de/train/raw.", ['en', 'de'])
-    for lang in dataset.data:
-        print(len(dataset.data[lang]))
+    dataset_config = {
+        'keys': ['en', 'de'],
+        'data_dir': './data/wmt17_en-de',
+        'train':{
+            'prefix': 'train/clean',
+        },
+        'valid':{
+            'prefix': 'validation/raw',
+        },
+    }
+    dataset = PairedDatasetWapper()
+    dataset.load_data(dataset_config, 'valid')
+    for i in range(10):
+        print(dataset[i])
     # for i in range(10):
     #     print(dataset[i])
     # testset = DataLoader(dataset, batch_size=10, shuffle=True)

@@ -1,11 +1,12 @@
 # @package _group_
-name: TransformerSamll
 type: Transformer
 config:
-  d_model: 512
+  vocab_size: ~
+  padding_idx: ~
+  d_model: 128
   nhead: 2
   num_encoder_layers: 4
   num_decoder_layers: 4
-  dim_feedforward: 1024
+  dim_feedforward: 512
   dropout: 0.1
   activation: relu

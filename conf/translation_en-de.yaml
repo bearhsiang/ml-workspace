@@ -4,7 +4,8 @@ defaults:
   - dataset: wmt17_en-de
 
 data_root: /home/sean/Desktop/seq2seq/data/
-DatasetWapper: PairedDataset
+datasetWapper: 
+  type: PairedDatasetWapper
 
 src_lang: de
 tgt_lang: en
@@ -24,13 +25,14 @@ tokenizer:
 optimizer:
   type: NoamOpt
   config:
-    lr_factor: 2
-    lr_warmup: 4000
+    model_size: ${model.config.d_model}
+    factor: 2
+    warmup: 4000
     backend: 
       type: AdamW
       config: 
         lr: 0
-        betas: (0.9, 0.98)
+        betas: [0.9, 0.98]
         eps: 1e-9
         weight_decay: 0.0001
 

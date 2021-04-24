@@ -1,15 +1,16 @@
 import torch
 import sentencepiece as spm
 from torch.utils.data import DataLoader
-from dataset import PairedDataset
 import torch.nn as nn
 import torch.optim as optim
 from model import Transformer
 from tqdm.auto import tqdm
 import datasets
-from optimizer.NoamOpt import NoamOpt
 import logging
 import sacrebleu
+import hydra
+from omegaconf import DictConfig, OmegaConf
+from factory import get_tokenizer, get_datasetWapper, get_optimizer, get_model
 
 logging.basicConfig(format='|%(levelname)s| %(message)s', level=logging.DEBUG)
 
@@ -105,56 +106,32 @@ def inference(model, data, tokenizer, config, incremental_decode=False):
     logging.info(f'precision = {score.precisions}')
     return score
 
-
-def main():
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
-    config = {
-        'src_lang': 'de',
-        'tgt_lang': 'en',
-        'total_epochs': 30,
-        'spm_model_path': 'data/wmt17_en-de/spm_8000.model',
-        'train_prefix': 'data/wmt17_en-de/train/clean.',
-        'valid_prefix': 'data/wmt17_en-de/validation/raw.',
-        'train_batch_size': 64,
-        'grad_accu_step': 2,
-        'valid_step': 1024,
-        'valid_batch_size': 128,
-        'max_len': 128,
-        'valid_max_len': 128,
-        'lr_factor': 2,
-        'lr_warmup': 4000,
-    }
+@hydra.main(config_path="conf", config_name="translation_en-de.yaml")
+def main(config : DictConfig):
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-    tokenizer = spm.SentencePieceProcessor(model_file=config['spm_model_path'])
-    tokenizer.set_encode_extra_options("bos:eos")
+    tokenizer = get_tokenizer(**config['tokenizer'])
+    train_set = get_datasetWapper(**config['datasetWapper'])
+    train_set.load_data(config['dataset'], 'train')
+    valid_set = get_datasetWapper(**config['datasetWapper'])
+    valid_set.load_data(config['dataset'], 'valid')
+    # tokenizer.set_encode_extra_options("bos:eos")
     train_data = DataLoader(
-        PairedDataset(config['train_prefix'], [config['src_lang'], config['tgt_lang']]),
+        train_set,
         batch_size = config['train_batch_size'],
         shuffle = True,
     )
     valid_data = DataLoader(
-        PairedDataset(config['valid_prefix'], [config['src_lang'], config['tgt_lang']]),
+        valid_set,
         batch_size = config['valid_batch_size'],
         shuffle = False,
     )
 
-    model_config = {
-        'vocab_size': tokenizer.vocab_size(),
-        'd_model': 256,
-        'nhead': 4,
-        'num_encoder_layers': 4,
-        'num_decoder_layers': 4,
-        'dim_feedforward': 1024,
-        'padding_idx': tokenizer.pad_id(),
-    }
-    model = Transformer(**model_config).to(device)
-    optimizer = NoamOpt(
-        model_size=model_config['d_model'], 
-        factor=config['lr_factor'], 
-        warmup=config['lr_warmup'], 
-        optimizer=torch.optim.AdamW(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9, weight_decay=0.0001))
+    config['model']['config']['vocab_size'] = tokenizer.vocab_size()
+    config['model']['config']['padding_idx'] = tokenizer.pad_id()
+    model = get_model(**config['model']).to(device)
+    optimizer = get_optimizer(model.parameters(), **config['optimizer'])
+
     criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_id())
     for epoch in range(config['total_epochs']):
         logging.info(f'epoch {epoch}:')

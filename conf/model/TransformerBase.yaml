@@ -1,5 +1,4 @@
 # @package _group_
-name: TransformerBase
 type: Transformer
 config:
   d_model: 512
