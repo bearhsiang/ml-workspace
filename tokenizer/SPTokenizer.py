@@ -33,3 +33,5 @@ class SPTokenizer(Tokenizer):
     def id2token(self, l):
         return self.model.id_to_piece(l)
     
+    def set_encode_extra_options(self, option):
+        self.model.set_encode_extra_options(option)

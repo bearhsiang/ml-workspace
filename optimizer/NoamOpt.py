@@ -38,3 +38,11 @@ class NoamOpt:
     
     def zero_grad(self):
         self.optimizer.zero_grad()
+
+    def state_dict(self):
+        return {
+            "step": self._step,
+        }
+
+    def load_state_dict(self, state_dict):
+        self._step = state_dict['step']
