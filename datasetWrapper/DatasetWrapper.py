@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset
-class DatasetWapper(Dataset):
+class DatasetWrapper(Dataset):
     
     def __init__(self, **config):
         super().__init__()

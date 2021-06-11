@@ -1,10 +1,16 @@
 # @package _group_
-name: wmt17_en-de
-keys: [en, de]
-data_dir: ${data_root}/wmt17_en-de
-train:
-  prefix: train/clean
-valid:
-  prefix: validation/raw
-test:
-  prefix: test/clean
+wrapper: 
+  type: PairedDatasetWrapper
+config:
+  name: wmt17_en-de
+  keys: [en, de]
+  data_dir: /home/sean/Desktop/ml-workspace/data/wmt17_en-de
+split:
+  train:
+    prefix: train/clean
+  valid:
+    prefix: validation/raw
+  test:
+    prefix: test/raw
+  valid_short:
+    prefix: valid_short/raw

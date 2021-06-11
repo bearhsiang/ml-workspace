@@ -1,0 +1,33 @@
+# @package _group_
+type: TranslationRunner
+config:
+  # translation config
+  src_lang: en
+  tgt_lang: de
+  max_len:  
+    train: 256
+    valid: 256
+  tokenizer:
+    type: SPTokenizer
+    config:
+      spm_path: ${dataset.config.data_dir}/spm_8000.model
+      # extra_option: "bos:eos"
+
+  # general config
+  batch_size:
+    train: 16
+    valid: 128
+  # total_epochs: 30
+  total_steps: 30000
+  grad_accu_step: 8
+  valid_step: 5120
+  log_step: 1
+  save_step: 1000
+  n_workers: 8
+  data:
+    train: 
+      - train # split
+    valid:
+      - valid
+      # - valid
+      # - test

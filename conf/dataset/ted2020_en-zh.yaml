@@ -1,0 +1,14 @@
+# @package _group_
+wrapper: 
+  type: PairedDatasetWrapper
+config:
+  name: ted2020_en-zh
+  keys: [en, zh]
+  data_dir: ${data_root}/ted2020_en-zh
+split:
+  train:
+    prefix: train/clean
+  valid:
+    prefix: valid/clean
+  test:
+    prefix: test/clean

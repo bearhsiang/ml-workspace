@@ -6,7 +6,6 @@ class SPTokenizer(Tokenizer):
     # sentencepiece tokenizer
 
     def __init__(self, spm_path):
-
         self.model = spm.SentencePieceProcessor(spm_path)
 
     def encode(self, s):

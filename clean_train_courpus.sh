@@ -5,9 +5,9 @@ fi
 
 data_root='./data/'
 script="mosesdecoder/scripts/training/clean-corpus-n.perl"
-dataset='wmt17_en-de'
+dataset='wmt17_en-cs'
 l1='en'
-l2='de'
+l2='cs'
 train_splits="train"
 # other_splits="validation test"
 ratio=5

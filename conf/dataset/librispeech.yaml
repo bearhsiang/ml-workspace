@@ -1,0 +1,13 @@
+# @package _group_
+wrapper: 
+  type: LibriSpeechWrapper
+config:
+  name: librispeech
+  data_dir: /hdd/LibriSpeech/
+split:
+  train:
+    prefix: train-clean-100
+  valid:
+    prefix: dev-clean
+  test:
+    prefix: test-clean

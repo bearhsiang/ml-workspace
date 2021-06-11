@@ -1,0 +1,59 @@
+# @package _global_
+defaults:
+  - model: TransformerBase
+  - data: wmt17_en-de
+  - monitor: wandb
+
+name: translation-${data.config.name}
+label: default
+
+data_root: /home/sean/Desktop/ml-workspace/data/
+
+trainer:
+  type: TranslationTrainer
+  config:
+    # translation config
+    src_lang: en
+    tgt_lang: de
+    max_len:  
+      train: 256
+      valid: 256
+    tokenizer:
+      type: SPTokenizer
+      config:
+        spm_path: ${data_root}/${data.config.name}/spm_8000.model
+        # extra_option: "bos:eos"
+
+    # general config
+    batch_size:
+      train: 16
+      valid: 128
+    # total_epochs: 30
+    total_steps: 30000
+    grad_accu_step: 8
+    valid_step: 5120
+    log_step: 1
+    save_step: 1000
+    data:
+      train: 
+        - train # split
+      valid:
+        - valid
+        # - valid
+        # - test
+
+hydra: 
+  run:
+    dir: outputs/${name}/${label}
+
+
+checkpoints:
+  dir: checkpoints
+  save_best: True
+
+optimizer:
+  type: AdamW
+  config:
+    lr: 0.0001
+    betas: [0.9, 0.98]
+    eps: 1e-9

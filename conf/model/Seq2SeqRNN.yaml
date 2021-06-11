@@ -1,0 +1,7 @@
+# @package _group_
+type: Seq2SeqRNN
+config:
+  vocab_size: ~
+  padding_idx: ~
+  d_model: 128
+  n_layers: 2

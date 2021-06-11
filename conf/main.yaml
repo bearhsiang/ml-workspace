@@ -1,0 +1,18 @@
+# @package _global_
+defaults:
+  - model: TransformerBase
+  - dataset: wmt17_en-de
+  - monitor: wandb
+  - runner: translation
+  - optimizer: AdamW
+
+name: translation-${data.config.name}
+label: default
+
+hydra: 
+  run:
+    dir: outputs/${name}/${label}
+
+checkpoints:
+  dir: checkpoints
+  save_best: True

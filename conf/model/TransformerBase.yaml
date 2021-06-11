@@ -1,6 +1,8 @@
 # @package _group_
 type: Transformer
 config:
+  vocab_size: ~
+  padding_idx: ~
   d_model: 512
   nhead: 8
   num_encoder_layers: 6

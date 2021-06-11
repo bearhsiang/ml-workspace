@@ -2,9 +2,9 @@ from datasets import load_dataset
 from pathlib import Path
 from tqdm.auto import tqdm
 
-dataset_name = 'wmt17_en-zh'
-dataset_config = ['wmt17', 'zh-en']
-langs = ['en', 'zh']
+dataset_name = 'wmt17_en-cs'
+dataset_config = ['wmt17', 'cs-en']
+langs = ['en', 'cs']
 
 data_root = Path('./data')
 dataset = load_dataset(*dataset_config)
