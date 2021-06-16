@@ -1,0 +1,20 @@
+# @package _global_
+defaults:
+  - model: SpeechTransformer_s
+  - dataset: librispeech
+  - monitor: wandb
+  - runner: asr
+  - optimizer: Adam
+  - criterion: labelsmoothing
+
+name: asr-${dataset.config.name}
+label: default
+mode: train
+
+hydra: 
+  run:
+    dir: outputs/${name}/${label}
+
+checkpoints:
+  dir: checkpoints
+  save_best: True

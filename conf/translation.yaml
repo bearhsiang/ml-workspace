@@ -5,9 +5,12 @@ defaults:
   - monitor: wandb
   - runner: translation
   - optimizer: AdamW
+  - criterion: labelsmoothing
 
-name: translation-${data.config.name}
+
+name: translation-${dataset.config.name}
 label: default
+mode: train
 
 hydra: 
   run:

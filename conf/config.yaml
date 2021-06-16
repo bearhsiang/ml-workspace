@@ -1,5 +1,0 @@
-# @package _global_
-defaults:
-  - model: TransformerBase
-  - dataset: wmt17_en-de
-  - training: normal

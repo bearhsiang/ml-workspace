@@ -23,7 +23,7 @@ config:
   valid_step: 5120
   log_step: 1
   save_step: 1000
-  n_workers: 8
+  num_workers: 1
   data:
     train: 
       - train # split

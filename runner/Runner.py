@@ -1,14 +1,19 @@
-from factory import get_model, get_optimizer, get_dataset, get_monitor
+from criterion import get_criterion
+from model import get_model
+from optimizer import get_optimizer
+from datasetWrapper import get_dataset
+from monitor import get_monitor
 from torch.utils.data import DataLoader
 import logging
 import os
 import torch
 from tqdm.auto import tqdm
+
 logger = logging.getLogger(__name__)
 
 class Runner:
 
-    def __init__(self, total_steps, batch_size, grad_accu_step, valid_step, log_step, save_step, n_workers, data):
+    def __init__(self, total_steps, batch_size, grad_accu_step, valid_step, log_step, save_step, num_workers, data):
 
         self.total_steps = total_steps
         self.batch_size = batch_size
@@ -16,13 +21,14 @@ class Runner:
         self.valid_step = valid_step
         self.save_step = save_step
         self.log_step = log_step
-        self.n_workers = n_workers
+        self.num_workers = num_workers
         self.data = data
         
         self.dataset = {}
         self.state = {
             'step': 0,
         }
+        self._scaler = torch.cuda.amp.GradScaler()
 
     def set_device(self, device):
         self.device = device
@@ -61,15 +67,16 @@ class Runner:
         return DataLoader(
             self.dataset[split],
             batch_size=self.batch_size[mode],
-            num_workers=self.n_workers,
-            collate_fn=getattr(self.dataset[split], 'collate_fn', None)
+            num_workers=self.num_workers,
+            collate_fn=getattr(self.dataset[split], 'collate_fn', None),
+            shuffle= True if mode == 'train' else False
         )
 
     def get_splits(self, mode):
         return self.data[mode]
 
-    def set_criterion(self, config):
-        pass
+    def set_criterion(self, **config):
+        return get_criterion(**config)
 
     def get_state(self):
         return self.state
@@ -82,9 +89,10 @@ class Runner:
         batch = self.create_batch(raw_batch, mode)
         if mode == 'train':
             model_input, tgt = batch
-            logit = self.model(**model_input)
-            loss = self.count_loss(logit, tgt) / self.grad_accu_step
-            loss.backward()
+            with torch.cuda.amp.autocast(enabled=False):
+                logit = self.model(**model_input)
+                loss = self.count_loss(logit, tgt) / self.grad_accu_step
+            self._scaler.scale(loss).backward()
             log['loss'].append(loss.item())
         else:
             model_input = batch
@@ -92,8 +100,10 @@ class Runner:
             log['output'].append(output)
 
     def update_model(self):
-        self.optimizer.step()
+        self._scaler.step(self.optimizer)
+        self._scaler.update()
         self.optimizer.zero_grad()
+
 
     def create_batch(raw_batch, mode=False):
         '''

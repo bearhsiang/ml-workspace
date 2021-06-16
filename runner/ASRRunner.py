@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
-from factory import get_tokenizer
+from tokenizer import get_tokenizer
 import sacrebleu
 import logging
 import torchaudio
@@ -27,7 +27,8 @@ class ASRRunner(Runner):
         src_features = [torchaudio.compliance.kaldi.fbank(wav, num_mel_bins=80) for wav in src_wavs]
         if self.max_len[mode]['feature'] > 0:
             src_features = [feature[: self.max_len[mode]['feature']] for feature in src_features]
-        src_lengths = [len(feature) for feature in src_features]
+        
+        src_lengths = torch.LongTensor([len(feature) for feature in src_features]).to(self.device)
         
         if mode == 'train':
             tgt_text = raw_batch[1]
@@ -67,6 +68,7 @@ class ASRRunner(Runner):
         ## infernece
         model_input = {
             'src_features': src_features,
+            'src_lengths': src_lengths,
             'start_ids': tgt_ids,
             'max_len' : self.max_len[mode]['target'],
         }
@@ -80,13 +82,8 @@ class ASRRunner(Runner):
             **config,
         )
 
-    def set_criterion(self):
-        # self.criterion = nn.CrossEntropyLoss(ignore_index=self.tokenizer.pad_id())
-        self.criterion = LabelSmoothingLoss(
-            self.tokenizer.vocab_size(),
-            smoothing = 0.1,
-            ignore_index = self.tokenizer.pad_id(),
-        ).to(self.device)
+    def set_criterion(self, **config):
+        self.criterion = super().set_criterion(**config, tokenizer=self.tokenizer).to(self.device)
 
     def count_loss(self, hypo, gold):
         hypo = hypo.reshape(-1, hypo.size(-1))
@@ -160,52 +157,3 @@ class ASRRunner(Runner):
                 # logger.info(f'[tgt tokens] {log["tgt_tokens"][i]}')
                 logger.info(f'[hyp] {log["hyp"][i]}')
                 # logger.info(f'[hyp tokens] {log["hyp_tokens"][i]}')
-
-
-# class LabelSmoothingLoss(nn.Module):
-#     """
-#     With label smoothing,
-#     KL-divergence between q_{smoothed ground truth prob.}(w)
-#     and p_{prob. computed by model}(w) is minimized.
-#     """
-#     def __init__(self, label_smoothing, tgt_vocab_size, ignore_index=-100):
-#         assert 0.0 < label_smoothing <= 1.0
-#         self.ignore_index = ignore_index
-#         super(LabelSmoothingLoss, self).__init__()
-
-#         smoothing_value = label_smoothing / (tgt_vocab_size - 2)
-#         one_hot = torch.full((tgt_vocab_size,), smoothing_value)
-#         one_hot[self.ignore_index] = 0
-#         self.register_buffer('one_hot', one_hot.unsqueeze(0))
-
-#         self.confidence = 1.0 - label_smoothing
-
-#     def forward(self, output, target):
-#         """
-#         output (FloatTensor): batch_size x n_classes
-#         target (LongTensor): batch_size
-#         """
-#         model_prob = self.one_hot.repeat(target.size(0), 1)
-#         model_prob.scatter_(1, target.unsqueeze(1), self.confidence)
-#         model_prob.masked_fill_((target == self.ignore_index).unsqueeze(1), 0)
-
-#         return F.kl_div(output, model_prob, reduction='batchmean')
-
-class LabelSmoothingLoss(nn.Module):
-    def __init__(self, classes, smoothing=0.0, ignore_index = -100, dim=-1):
-        super(LabelSmoothingLoss, self).__init__()
-        self.confidence = 1.0 - smoothing
-        self.smoothing = smoothing
-        self.cls = classes
-        self.dim = dim
-        self.ignore_index = ignore_index
-
-    def forward(self, pred, target):
-        pred = pred.log_softmax(dim=self.dim)
-        with torch.no_grad():
-            # true_dist = pred.data.clone()
-            true_dist = torch.zeros_like(pred)
-            true_dist.fill_(self.smoothing / (self.cls - 1))
-            true_dist.scatter_(1, target.data.unsqueeze(1), self.confidence)
-            true_dist.masked_fill_((target == self.ignore_index).unsqueeze(1), 0)
-        return torch.mean(torch.sum(-true_dist * pred, dim=self.dim))

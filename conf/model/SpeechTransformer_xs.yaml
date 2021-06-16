@@ -5,10 +5,10 @@ config:
   padding_idx: ~
   d_model: 256
   nhead: 4
-  num_encoder_layers: 3
+  num_encoder_layers: 6
   num_decoder_layers: 3
-  dim_feedforward: 512
-  dropout: 0.1
+  dim_feedforward: 1024
+  dropout: 0.3
   activation: relu
   connector:
     type: Conv1dSubsampler

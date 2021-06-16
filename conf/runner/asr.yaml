@@ -4,11 +4,11 @@ config:
   # translation config
   max_len:  
     train:
-      feature: -1
-      target: 128
+      feature: 4096
+      target: 256
     valid: 
-      feature: -1
-      target: 128
+      feature: 4096
+      target: 256
   tokenizer:
     type: SPTokenizer
     config:
@@ -21,9 +21,9 @@ config:
     valid: 8
   # total_epochs: 30
   total_steps: 30000
-  grad_accu_step: 8
-  valid_step: 5120
-  n_workers: 8
+  grad_accu_step: 16
+  valid_step: 1024
+  num_workers: 1
   log_step: 1
   save_step: 1000
   data:

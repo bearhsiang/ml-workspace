@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
-from factory import get_tokenizer
+from tokenizer import get_tokenizer
 import sacrebleu
 import logging
 
@@ -78,14 +78,9 @@ class TranslationRunner(Runner):
         super().set_model(
             **config,
         )
-
-    def set_criterion(self):
-        # self.criterion = nn.CrossEntropyLoss(ignore_index=self.tokenizer.pad_id())
-        self.criterion = LabelSmoothingLoss(
-            self.tokenizer.vocab_size(),
-            smoothing = 0.1,
-            ignore_index = self.tokenizer.pad_id(),
-        ).to(self.device)
+    
+    def set_criterion(self, **config):
+        self.criterion = super().set_criterion(**config, tokenizer=self.tokenizer).to(self.device)
 
     def count_loss(self, hypo, gold):
         hypo = hypo.reshape(-1, hypo.size(-1))
@@ -173,22 +168,3 @@ class TranslationRunner(Runner):
 #         model_prob.masked_fill_((target == self.ignore_index).unsqueeze(1), 0)
 
 #         return F.kl_div(output, model_prob, reduction='batchmean')
-
-class LabelSmoothingLoss(nn.Module):
-    def __init__(self, classes, smoothing=0.0, ignore_index = -100, dim=-1):
-        super(LabelSmoothingLoss, self).__init__()
-        self.confidence = 1.0 - smoothing
-        self.smoothing = smoothing
-        self.cls = classes
-        self.dim = dim
-        self.ignore_index = ignore_index
-
-    def forward(self, pred, target):
-        pred = pred.log_softmax(dim=self.dim)
-        with torch.no_grad():
-            # true_dist = pred.data.clone()
-            true_dist = torch.zeros_like(pred)
-            true_dist.fill_(self.smoothing / (self.cls - 1))
-            true_dist.scatter_(1, target.data.unsqueeze(1), self.confidence)
-            true_dist.masked_fill_((target == self.ignore_index).unsqueeze(1), 0)
-        return torch.mean(torch.sum(-true_dist * pred, dim=self.dim))

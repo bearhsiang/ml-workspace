@@ -1,0 +1,7 @@
+# @package _group_
+type: LabelSmoothingLoss
+config:
+  classes: ~
+  ignore_index: ~
+  smoothing: 0.3
+  dim: -1

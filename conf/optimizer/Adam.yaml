@@ -1,0 +1,4 @@
+# @package _group_
+type: torch.optim.Adam
+config:
+  lr: 2e-3
