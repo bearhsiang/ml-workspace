@@ -61,7 +61,7 @@ class SpeechTransformer(nn.Module):
 
     def inference(self, src_features, src_lengths, start_ids, max_len):
 
-        src = self.connector(src_features)
+        src, src_lengths = self.connector(src_features, src_lengths)
         src = self.pos_embed(src)
         src_key_padding_mask = self._create_mask_with_lengths(src_lengths, src.size(0))
 
@@ -74,7 +74,7 @@ class SpeechTransformer(nn.Module):
         for i in range(max_len):
 
             tgt_mask = self.model.generate_square_subsequent_mask(output_ids.size(0)).to(src.device)
-            tgt = self.tgt_embed(output_ids)
+            tgt = self.embed(output_ids)
             tgt = self.pos_embed(tgt)
 
             tgt_key_padding_mask = (output_ids == self.padding_idx).transpose(0, 1).to(src.device)
@@ -113,9 +113,3 @@ class SpeechTransformer(nn.Module):
         mask = torch.arange(max_lengths).to(lengths.device).view(1, max_lengths)
         mask = mask.expand(batch_size, -1) >= lengths.view(batch_size, 1).expand(-1, max_lengths)
         return mask
-
-
-        # mask = torch.full((len(lengths), max_lengths), True, dtype=torch.bool)
-        # for i, length in enumerate(lengths):
-        #     mask[i, :length] = False
-        # return mask

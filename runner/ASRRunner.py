@@ -7,6 +7,7 @@ from tokenizer import get_tokenizer
 import sacrebleu
 import logging
 import torchaudio
+import editdistance
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ class ASRRunner(Runner):
             tgt_text = raw_batch[1]
             tgt_ids = self.tokenizer.encode(tgt_text)
         else:
-            tgt_ids = [[self.tokenizer.bos_id()] for _ in range(len(src_ids))]
+            tgt_ids = [[self.tokenizer.bos_id()] for _ in range(len(src_features))]
 
         tgt_ids = [torch.LongTensor(l) for l in tgt_ids]
 
@@ -92,19 +93,16 @@ class ASRRunner(Runner):
 
     def _metric(self, hypo, gold):
 
-        cer = []
         wer = []
 
         for hyp, ref in zip(hypo, gold):
-            cer.append(editdistance.eval(hyp, ref)/len(ref))
             hyp_w = hyp.split()
             ref_w = ref.split()
             wer.append(editdistance.eval(hyp_w, ref_w)/len(ref_w))
 
-        cer = sum(cer)/len(cer)
         wer = sum(wer)/len(wer)
 
-        return cer, wer
+        return wer
 
     def step(self, raw_batch, log, mode):
         if mode == 'train':
@@ -113,11 +111,6 @@ class ASRRunner(Runner):
             batch = self.create_batch(raw_batch, mode)
             out_ids = self.model.inference(**batch).transpose(0, 1).cpu().tolist()
 
-            # batch = self.create_batch(raw_batch, mode='train')
-            # model_input, tgt = batch
-            # logit = self.model(**model_input)
-            # out_ids = torch.argmax(logit, dim=-1).transpose(0, 1).cpu().tolist()
-
             # remove tokens behind <eos>
             for i in range(len(out_ids)):
                 if self.tokenizer.eos_id() in out_ids[i]:
@@ -125,13 +118,8 @@ class ASRRunner(Runner):
 
             hyp_text = self.tokenizer.decode(out_ids)
 
-            log['src'] += raw_batch[self.src_lang]
-            # log['src_tokens'] += [' '.join([self.tokenizer.id2token(i) for i in s]) for s in model_input['src_ids'].transpose(0, 1).cpu().tolist()]
             log['hyp'] += hyp_text
-            # log['hyp_tokens'] += [' '.join([self.tokenizer.id2token(i) for i in s]) for s in out_ids]
-            log['ref'] += raw_batch[self.tgt_lang]
-            # log['ref_tokens'] += [' '.join([self.tokenizer.id2token(i) for i in s]) for s in model_input['tgt_ids'].transpose(0, 1).cpu().tolist()]
-            # log['tgt_tokens'] += [' '.join([self.tokenizer.id2token(i) for i in s]) for s in tgt.transpose(0, 1).cpu().tolist()]
+            log['ref'] += raw_batch[1]
 
     def log(self, log, mode, split):
 
@@ -139,21 +127,18 @@ class ASRRunner(Runner):
 
             loss = sum(log['loss'])
             self.monitor.log({
-                'loss': loss,
+                f'{mode}-{split}/loss': loss,
             })
 
         elif mode == 'valid':
 
-            bleu = sacrebleu.corpus_bleu(log['hyp'], [log['ref']])
+            score = self._metric(log['hyp'], log['ref'])
             self.monitor.log({
-                f'{split}-bleu': bleu.score,  
+                f'{mode}-{split}/wer': score,
             })
-            logger.info(f'{split}-bleu: {bleu.score}')
-            for i in range(10):
-                logger.info(f'[src] {log["src"][i]}')
-                # logger.info(f'[src tokens] {log["src_tokens"][i]}')
-                logger.info(f'[ref] {log["ref"][i]}')
-                # logger.info(f'[ref tokens] {log["ref_tokens"][i]}')
-                # logger.info(f'[tgt tokens] {log["tgt_tokens"][i]}')
-                logger.info(f'[hyp] {log["hyp"][i]}')
-                # logger.info(f'[hyp tokens] {log["hyp_tokens"][i]}')
+            for i in range(5):
+                logger.info(f"{mode}-{split}/{i}")
+                logger.info(f"{mode}-{split}/[hyp] {log['hyp'][i]}")
+                logger.info(f"{mode}-{split}/[ref] {log['ref'][i]}")
+            logger.info(f'{mode}-{split}/wer: {score}')
+
